@@ -6,6 +6,8 @@ import styled from 'styled-components';
 
 export const TodoListMain = () => {
   const [data, setData] = useState<TodoItem[]>();
+  const [category, setCategory] = useState('ALL');
+  const categories = ['ALL', 'TODO', 'DONE'];
 
   const [toggle, setToggle] = useState<{ [key: number]: boolean }>({});
   const navigate = useNavigate();
@@ -21,13 +23,19 @@ export const TodoListMain = () => {
   };
 
   const getData = async () => {
-    const response = await getTodoList();
-    setData(response.data.items.reverse());
+    const data = (await getTodoList()).data.items;
+    setData(
+      category === 'ALL'
+        ? data
+        : category === 'TODO'
+        ? data.filter((i) => !i.done)
+        : data.filter((i) => i.done),
+    );
   };
 
   useEffect(() => {
     getData();
-  }, []);
+  }, [category]);
 
   const showTodoDetail = async (id: number) => {
     setToggle((prev) => {
@@ -49,6 +57,20 @@ export const TodoListMain = () => {
 
   return (
     <>
+      <ul>
+        {categories.map((text) => {
+          return (
+            <li key={text}>
+              <CategoryBtn
+                className={`${`category-${text}`} ${category === text ? 'isActive' : ''}`}
+                onClick={() => setCategory(text)}
+              >
+                {text}
+              </CategoryBtn>
+            </li>
+          );
+        })}
+      </ul>
       <TodoList>
         {data?.map((item) => (
           <li key={item._id}>
@@ -60,7 +82,8 @@ export const TodoListMain = () => {
             <TodoUpdate idNum={item._id} toggle={toggle[item._id]} getData={getData} />
           </li>
         ))}
-        {!data?.length && <TodoGuide>할일을 추가해주세요.</TodoGuide>}
+        {!data?.length && category === 'TODO' && <TodoGuide>할일을 추가해주세요.</TodoGuide>}
+        {!data?.length && category === 'DONE' && <TodoGuide>할일을 완료해주세요.</TodoGuide>}
       </TodoList>
       <ButtonContainer>
         <Button onClick={moveToRegist}>등록</Button>
@@ -145,5 +168,12 @@ const Button = styled.button`
   &.redButton:hover {
     background-color: #ef5242;
     color: white;
+  }
+`;
+
+const CategoryBtn = styled.button`
+  border: none;
+  &.isActive {
+    background-color: yellow;
   }
 `;
