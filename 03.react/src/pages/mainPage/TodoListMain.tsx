@@ -15,7 +15,8 @@ export const TodoListMain = () => {
   };
 
   const deleteAllTodo = async () => {
-    data?.forEach((item) => deleteTodoItem(item._id));
+    const res: any = data?.map((item) => deleteTodoItem(item._id));
+    await Promise.all(res);
     getData();
   };
 
