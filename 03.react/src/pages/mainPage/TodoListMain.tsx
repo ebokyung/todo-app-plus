@@ -8,9 +8,31 @@ export const TodoListMain = () => {
   const [data, setData] = useState<TodoItem[]>();
   const [category, setCategory] = useState('ALL');
   const categories = ['ALL', 'TODO', 'DONE'];
+  const sorting = ['latest', 'earliest'];
+  const [sort, setSort] = useState(sorting[0]);
 
   const [toggle, setToggle] = useState<{ [key: number]: boolean }>({});
   const navigate = useNavigate();
+
+  const getData = async () => {
+    const dataAll = (await getTodoList()).data.items;
+    const filteredData =
+      category === 'ALL'
+        ? dataAll
+        : category === 'TODO'
+        ? dataAll.filter((i) => !i.done)
+        : dataAll.filter((i) => i.done);
+
+    if (sort === 'latest')
+      filteredData.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
+    else filteredData.sort((a, b) => +new Date(a.updatedAt) - +new Date(b.updatedAt));
+
+    setData(filteredData);
+  };
+
+  useEffect(() => {
+    getData();
+  }, [category, sort]);
 
   const moveToRegist = () => {
     navigate('/regist');
@@ -21,21 +43,6 @@ export const TodoListMain = () => {
     await Promise.all(res);
     getData();
   };
-
-  const getData = async () => {
-    const data = (await getTodoList()).data.items;
-    setData(
-      category === 'ALL'
-        ? data
-        : category === 'TODO'
-        ? data.filter((i) => !i.done)
-        : data.filter((i) => i.done),
-    );
-  };
-
-  useEffect(() => {
-    getData();
-  }, [category]);
 
   const showTodoDetail = async (id: number) => {
     setToggle((prev) => {
@@ -57,6 +64,12 @@ export const TodoListMain = () => {
 
   return (
     <>
+      <select onChange={(e) => setSort(e.target.value)}>
+        <option value='latest' selected>
+          최신순
+        </option>
+        <option value='earliest'>오래된순</option>
+      </select>
       <ul>
         {categories.map((text) => {
           return (
@@ -83,6 +96,7 @@ export const TodoListMain = () => {
           </li>
         ))}
         {!data?.length && category === 'TODO' && <TodoGuide>할일을 추가해주세요.</TodoGuide>}
+        {!data?.length && category === 'DONE' && <TodoGuide>할일을 완료해주세요.</TodoGuide>}
         {!data?.length && category === 'DONE' && <TodoGuide>할일을 완료해주세요.</TodoGuide>}
       </TodoList>
       <ButtonContainer>
