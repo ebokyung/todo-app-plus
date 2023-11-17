@@ -36,6 +36,7 @@ export const TodoRegist = () => {
     let useAnswer = window.confirm(REGIST_PAGE_CONSTANT_TEXT.WRITE_CANCEL);
     if (useAnswer) {
       setInput(initialState);
+      moveToBack();
     }
   };
   return (
