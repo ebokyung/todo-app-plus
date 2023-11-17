@@ -1,6 +1,6 @@
 import TodoUpdate from '../../component/updatePage/TodoUpdate';
 import { getTodoList, deleteTodoItem, patchTodoItem } from '../../API/axios';
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -10,18 +10,21 @@ export const TodoListMain = () => {
   const categories = ['ALL', 'TODO', 'DONE'];
   const sorting = ['latest', 'earliest'];
   const [sort, setSort] = useState(sorting[0]);
+  const [inputSearch, setInputSearch] = useState('');
 
   const [toggle, setToggle] = useState<{ [key: number]: boolean }>({});
   const navigate = useNavigate();
 
-  const getData = async () => {
+  const getData = async (isSearchReset = false) => {
     const dataAll = (await getTodoList()).data.items;
-    const filteredData =
+    let filteredData =
       category === 'ALL'
         ? dataAll
         : category === 'TODO'
         ? dataAll.filter((i) => !i.done)
         : dataAll.filter((i) => i.done);
+
+    if (inputSearch && !isSearchReset) filteredData = searchKeyword(filteredData);
 
     if (sort === 'latest')
       filteredData.sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
@@ -62,8 +65,39 @@ export const TodoListMain = () => {
     getData();
   };
 
+  const handleSearchInput = (e: ChangeEvent<HTMLInputElement>) => {
+    const target = e.target as HTMLInputElement;
+    setInputSearch(target.value);
+  };
+
+  const searchKeyword = (data: TodoItem[]) => {
+    return data?.filter((item) => item.title.includes(inputSearch));
+  };
+
+  const submitSearchKeyword = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const foundItems = searchKeyword(data!);
+    setData(foundItems);
+  };
+  const clearInput = () => {
+    setInputSearch('');
+    getData(true);
+  };
+
+  useEffect(() => {}, [inputSearch]);
+
   return (
     <>
+      <form onSubmit={submitSearchKeyword}>
+        <input
+          type='text'
+          name='search'
+          placeholder='search'
+          value={inputSearch}
+          onChange={handleSearchInput}
+        />
+        <input type='reset' value='X' alt='Clear the search form' onClick={clearInput} />
+      </form>
       <select onChange={(e) => setSort(e.target.value)}>
         <option value='latest' selected>
           최신순
@@ -95,9 +129,8 @@ export const TodoListMain = () => {
             <TodoUpdate idNum={item._id} toggle={toggle[item._id]} getData={getData} />
           </li>
         ))}
-        {!data?.length && category === 'TODO' && <TodoGuide>할일을 추가해주세요.</TodoGuide>}
-        {!data?.length && category === 'DONE' && <TodoGuide>할일을 완료해주세요.</TodoGuide>}
-        {!data?.length && category === 'DONE' && <TodoGuide>할일을 완료해주세요.</TodoGuide>}
+        {/* {!data?.length && category === 'TODO' && <TodoGuide>할일을 추가해주세요.</TodoGuide>}
+        {!data?.length && category === 'DONE' && <TodoGuide>할일을 완료해주세요.</TodoGuide>} */}
       </TodoList>
       <ButtonContainer>
         <Button onClick={moveToRegist}>등록</Button>
